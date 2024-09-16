@@ -7,7 +7,7 @@ pub mod platform;
 
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
-    dotenv().ok();
+    dotenv()?;
 
     let modrinth_token = std::env::var("MODRINTH_TOKEN")?;
     let curseforge_cookie = std::env::var("CURSEFORGE_COOKIE")?;

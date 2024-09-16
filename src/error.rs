@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum Error {
     IoError(std::io::Error),
+    DotenvError(dotenv::Error),
     ConfigurationError(std::env::VarError),
     DatabaseError(tokio_postgres::Error),
     RequestError(reqwest::Error),
@@ -20,6 +21,12 @@ pub enum BalanceError {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Error::IoError(error)
+    }
+}
+
+impl From<dotenv::Error> for Error {
+    fn from(error: dotenv::Error) -> Self {
+        Error::DotenvError(error)
     }
 }
 
