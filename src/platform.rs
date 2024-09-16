@@ -3,7 +3,7 @@ use reqwest::Client as ReqwestClient;
 pub async fn get_modrinth_balance(
     client: &ReqwestClient,
     token: &str,
-) -> Result<Option<f64>, crate::error::Error> {
+) -> Result<f64, crate::error::Error> {
     let response = client
         .get("https://api.modrinth.com/v3/payout/balance")
         .header("Authorization", token)
@@ -16,7 +16,11 @@ pub async fn get_modrinth_balance(
     let pending = response["pending"].as_str();
 
     if available.is_none() && pending.is_none() {
-        return Ok(None);
+        return Err(crate::error::Error::BalanceUnavailable {
+            platform: "Modrinth".to_string(),
+            error: crate::error::BalanceError::MissingField("available && pending"),
+            json: response.clone(),
+        });
     }
 
     let available = available
@@ -39,13 +43,13 @@ pub async fn get_modrinth_balance(
     let available = available.unwrap_or(0.0);
     let pending = pending.unwrap_or(0.0);
 
-    Ok(Some(available + pending))
+    Ok(available + pending)
 }
 
 pub async fn get_curseforge_balance(
     client: &ReqwestClient,
     cookie: &str,
-) -> Result<Option<i64>, crate::error::Error> {
+) -> Result<i64, crate::error::Error> {
     let response = client
         .get("https://authors.curseforge.com/_api/reward-store/user-points")
         .header("Cookie", format!("cf_auth={}", cookie))
@@ -55,6 +59,16 @@ pub async fn get_curseforge_balance(
     let response = response.json::<serde_json::Value>().await?;
 
     let user_points = response["userPoints"].as_i64();
+
+    if user_points.is_none() {
+        return Err(crate::error::Error::BalanceUnavailable {
+            platform: "CurseForge".to_string(),
+            error: crate::error::BalanceError::MissingField("userPoints"),
+            json: response.clone(),
+        });
+    }
+
+    let user_points = user_points.unwrap();
 
     Ok(user_points)
 }

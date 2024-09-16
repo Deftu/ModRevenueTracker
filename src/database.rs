@@ -21,8 +21,8 @@ pub async fn create_tables(client: &DatabaseClient) -> Result<(), crate::error::
 
 pub async fn store_balances(
     client: &tokio_postgres::Client,
-    modrinth_balance: Option<f64>,
-    curseforge_points: Option<i64>,
+    modrinth_balance: &Option<f64>,
+    curseforge_points: &Option<i64>,
 ) -> Result<(), crate::error::Error> {
     client
         .execute(

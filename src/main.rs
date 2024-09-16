@@ -36,24 +36,38 @@ async fn main() -> Result<(), error::Error> {
     let reqwest_client = reqwest::Client::new();
 
     let modrinth_token = std::env::var("MODRINTH_TOKEN")?;
-    let modrinth_balance = platform::get_modrinth_balance(&reqwest_client, &modrinth_token).await?;
+    let modrinth_balance = platform::get_modrinth_balance(&reqwest_client, &modrinth_token).await;
 
     let curseforge_cookie = std::env::var("CURSEFORGE_COOKIE")?;
     let curseforge_points =
-        platform::get_curseforge_balance(&reqwest_client, &curseforge_cookie).await?;
+        platform::get_curseforge_balance(&reqwest_client, &curseforge_cookie).await;
 
-    database::store_balances(&database_client, modrinth_balance, curseforge_points).await?;
+    let optional_modrinth_balance = modrinth_balance.ok().map(platform::modrinth_balance_as_usd); // Convert to USD - Thankfully Modrinth provides an actual currency
+    let optional_curseforge_points = curseforge_points.ok(); // CurseForge points are unfortunately not a real currency and are thus harder to understand. Though, they can be converted to USD rather easily, the `platform::curseforge_points_to_usd` function gives you a good formula to start with.
+    database::store_balances(
+        &database_client,
+        &optional_modrinth_balance,
+        &optional_curseforge_points,
+    )
+    .await?;
 
-    println!("Balances stored successfully:");
-    println!(
-        "- Modrinth: ${}",
-        platform::modrinth_balance_as_usd(modrinth_balance.unwrap_or(0.0))
-    );
-    println!(
-        "- CurseForge: {} (${})",
-        curseforge_points.unwrap_or(0),
-        platform::curseforge_points_to_usd(curseforge_points.unwrap_or(0))
-    );
+    if optional_modrinth_balance.is_some() || optional_curseforge_points.is_some() {
+        println!("Balances stored successfully:");
+    } else {
+        println!("No balances stored.");
+    }
+
+    if let Some(modrinth_balance) = optional_modrinth_balance {
+        println!("Modrinth: {}", modrinth_balance);
+    } else {
+        println!("Modrinth: N/A");
+    }
+
+    if let Some(curseforge_points) = optional_curseforge_points {
+        println!("CurseForge: {}", curseforge_points);
+    } else {
+        println!("CurseForge: N/A");
+    }
 
     Ok(())
 }
