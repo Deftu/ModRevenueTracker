@@ -9,7 +9,7 @@ pub async fn create_tables(client: &DatabaseClient) -> Result<(), crate::error::
             "CREATE TABLE IF NOT EXISTS payout (
                 time TIMESTAMP NOT NULL DEFAULT to_timestamp(floor((extract('epoch' from now()) / 1800 )) * 1800),
                 modrinth_balance DOUBLE PRECISION,
-                curseforge_points BIGINT,
+                curseforge_points DOUBLE PRECISION,
                 PRIMARY KEY(time)
             )",
             &[],
@@ -22,7 +22,7 @@ pub async fn create_tables(client: &DatabaseClient) -> Result<(), crate::error::
 pub async fn store_balances(
     client: &tokio_postgres::Client,
     modrinth_balance: &Option<f64>,
-    curseforge_points: &Option<i64>,
+    curseforge_points: &Option<f64>,
 ) -> Result<(), crate::error::Error> {
     client
         .execute(

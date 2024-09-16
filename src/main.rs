@@ -43,7 +43,9 @@ async fn main() -> Result<(), error::Error> {
         platform::get_curseforge_balance(&reqwest_client, &curseforge_cookie).await;
 
     let optional_modrinth_balance = modrinth_balance.ok().map(platform::modrinth_balance_as_usd); // Convert to USD - Thankfully Modrinth provides an actual currency
-    let optional_curseforge_points = curseforge_points.ok(); // CurseForge points are unfortunately not a real currency and are thus harder to understand. Though, they can be converted to USD rather easily, the `platform::curseforge_points_to_usd` function gives you a good formula to start with.
+    let optional_curseforge_points = curseforge_points
+        .ok()
+        .map(platform::curseforge_points_to_usd); // CurseForge points are unfortunately not a real currency and are thus harder to understand. Though, they can be converted to USD rather easily, the `platform::curseforge_points_to_usd` function gives you a good formula to start with.
     database::store_balances(
         &database_client,
         &optional_modrinth_balance,
