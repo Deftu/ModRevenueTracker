@@ -9,6 +9,9 @@ pub mod platform;
 async fn main() -> Result<(), error::Error> {
     dotenv().ok();
 
+    let modrinth_token = std::env::var("MODRINTH_TOKEN")?;
+    let curseforge_cookie = std::env::var("CURSEFORGE_COOKIE")?;
+
     let database_name = std::env::var("DATABASE_NAME")?;
     let database_user = std::env::var("DATABASE_USER")?;
     let database_password = std::env::var("DATABASE_PASSWORD")?;
@@ -35,10 +38,7 @@ async fn main() -> Result<(), error::Error> {
 
     let reqwest_client = reqwest::Client::new();
 
-    let modrinth_token = std::env::var("MODRINTH_TOKEN")?;
     let modrinth_balance = platform::get_modrinth_balance(&reqwest_client, &modrinth_token).await;
-
-    let curseforge_cookie = std::env::var("CURSEFORGE_COOKIE")?;
     let curseforge_points =
         platform::get_curseforge_balance(&reqwest_client, &curseforge_cookie).await;
 
@@ -46,6 +46,7 @@ async fn main() -> Result<(), error::Error> {
     let optional_curseforge_points = curseforge_points
         .ok()
         .map(platform::curseforge_points_to_usd); // CurseForge points are unfortunately not a real currency and are thus harder to understand. Though, they can be converted to USD rather easily, the `platform::curseforge_points_to_usd` function gives you a good formula to start with.
+
     database::store_balances(
         &database_client,
         &optional_modrinth_balance,
