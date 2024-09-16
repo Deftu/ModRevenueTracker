@@ -18,6 +18,10 @@ async fn main() -> Result<(), error::Error> {
     let database_host = std::env::var("DATABASE_HOST")?;
     let database_port = std::env::var("DATABASE_PORT")?;
 
+    println!("Connecting to database:");
+    println!("  Host: {}", database_host);
+    println!("  Port: {}", database_port);
+
     let (database_client, database_connection) = tokio_postgres::connect(
         &format!(
             "host={} port={} user={} password={} dbname={}",
@@ -35,6 +39,8 @@ async fn main() -> Result<(), error::Error> {
     });
 
     database::create_tables(&database_client).await?;
+
+    println!();
 
     let reqwest_client = reqwest::Client::new();
 
